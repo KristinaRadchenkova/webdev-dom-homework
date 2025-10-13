@@ -65,7 +65,81 @@
 
   <script>
     "use strict";
-    // Код писать здесь
-    console.log("It works!");
+const nameInput = document.querySelector('.add-form-name');
+const textInput = document.querySelector('.add-form-text');
+const button = document.querySelector('.add-form-button');
+const commentsList = document.querySelector('.comments');
+
+nameInput.addEventListener('input', () => {
+});
+
+textInput.addEventListener('input', () => {
+});
+
+function addLikeHandlers() {
+    const likeButtons = document.querySelectorAll('.like-button');
+    
+    likeButtons.forEach(button => {
+        button.replaceWith(button.cloneNode(true));
+    });
+    
+    document.querySelectorAll('.like-button').forEach(likeBtn => {
+        const likesCounter = likeBtn.previousElementSibling;
+        
+        likeBtn.addEventListener('click', () => {
+            const count = parseInt(likesCounter.textContent);
+            
+            if (likeBtn.classList.contains('-active-like')) {
+                likesCounter.textContent = count - 1;
+                likeBtn.classList.remove('-active-like');
+            } else {
+                likesCounter.textContent = count + 1;
+                likeBtn.classList.add('-active-like');
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    addLikeHandlers();
+});
+
+button.addEventListener('click', () => {
+    const name = nameInput.value;
+    const text = textInput.value;
+    
+    if (name === '' || text === '') {
+        alert("Пожалуйста, заполните все поля");
+        return;
+    }
+    
+    const date = new Date();
+    const formattedDate = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+    
+    const newCommentHTML = `
+    <li class="comment">
+        <div class="comment-header">
+            <div>${name}</div>
+            <div>${formattedDate}</div>
+        </div>
+        <div class="comment-body">
+            <div class="comment-text">${text}</div>
+        </div>
+        <div class="comment-footer">
+            <div class="likes">
+                <span class="likes-counter">0</span>
+                <button class="like-button"></button>
+            </div>
+        </div>
+    </li>
+    `;
+    
+    commentsList.innerHTML += newCommentHTML;
+    
+    nameInput.value = '';
+    textInput.value = '';
+    
+    addLikeHandlers();
+});
   </script>
 </html>
