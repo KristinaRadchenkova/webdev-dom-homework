@@ -164,7 +164,7 @@
             const commentId = parseInt(commentElement.dataset.id);
             const comment = comments.find(c => c.id === commentId);
 
-            nameInput.value = escapeHtml(comment.name);
+            nameInput.value = "";
             textInput.value = `> ${escapeHtml(comment.text)}\n\n`;
             quotedCommentId = commentId;
 
