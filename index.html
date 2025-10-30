@@ -89,6 +89,17 @@
         const textInput = document.querySelector('.add-form-text');
         const button = document.querySelector('.add-form-button');
         const commentsList = document.querySelector('.comments');
+
+        let quotedCommentId = null;
+
+        function escapeHtml (unsafe) {
+            return unsafe
+              .replaceAll('&', "&amp;")
+              .replaceAll('<', "&lt;")
+              .replaceAll('>', "&gt;")
+              .replaceAll('"', "&quot;")
+              .replaceAll("'", "&#039;");
+        }
         
         function renderComments() {
             commentsList.innerHTML = '';
@@ -100,11 +111,11 @@
                 
                 commentElement.innerHTML = `
                     <div class="comment-header">
-                        <div>${comment.name}</div>
+                        <div>${escapeHtml(comment.name)}</div>
                         <div>${comment.date}</div>
                     </div>
                     <div class="comment-body">
-                        <div class="comment-text">${comment.text}</div>
+                        <div class="comment-text">${escapeHtml(comment.text)}</div>
                     </div>
                     <div class="comment-footer">
                         <div class="likes">
@@ -117,14 +128,17 @@
                 commentsList.appendChild(commentElement);
             });
             
-            addLikeHandlers();
+            addEventHandlers();
         }
         
-        function addLikeHandlers() {
+        function addEventHandlers() {
             const likeButtons = document.querySelectorAll('.like-button');
+            const commentElements = document.querySelectorAll('.comment');
             
             likeButtons.forEach(button => {
                 button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+
                     const commentElement = event.target.closest('.comment');
                     const commentId = parseInt(commentElement.dataset.id);
                     const comment = comments.find(c => c.id === commentId);
@@ -140,7 +154,25 @@
                     renderComments();
                 });
             });
-        }
+
+            commentElements.forEach(commentElement => {
+              commentElement.addEventListener('click', (event) => {
+                if (event.target.closest('.like-button')) {
+                  return;
+            }
+            
+            const commentId = parseInt(commentElement.dataset.id);
+            const comment = comments.find(c => c.id === commentId);
+
+            textInput.value = `> ${escapeHtml(comment.name)}\n\n${escapeHtml(comment.text)}\n\n`;
+            quotedCommentId = commentId;
+
+            textInput.focus();
+          });
+        });
+      }
+
+
         
         button.addEventListener('click', () => {
             const name = nameInput.value.trim();
@@ -152,7 +184,7 @@
             }
             
             const date = new Date();
-            const formattedDate = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear().toString().slice(-2)} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear().toString().slice(-2)} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
             
             const newComment = {
                 id: Date.now(),
@@ -167,6 +199,7 @@
             
             nameInput.value = '';
             textInput.value = '';
+            quotedCommentId = null;
             
             renderComments();
         });
