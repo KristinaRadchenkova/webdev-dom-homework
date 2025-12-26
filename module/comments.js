@@ -1,6 +1,7 @@
-let comments = []
+const comments = []
 export { comments }
 
 export const updateComments = (newComments) => {
-    comments = newComments
+    comments.length = 0
+    comments.push(...newComments)
 }

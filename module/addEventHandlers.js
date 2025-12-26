@@ -4,6 +4,14 @@ import { renderComments } from './renderComments.js'
 
 const textInput = document.querySelector('.add-form-text')
 
+function delay(interval = 300) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve()
+        }, interval)
+    })
+}
+
 function addEventHandlers() {
     const likeButtons = document.querySelectorAll('.like-button')
     const commentElements = document.querySelectorAll('.comment')
@@ -16,15 +24,25 @@ function addEventHandlers() {
             const commentId = parseInt(commentElement.dataset.id)
             const comment = comments.find((c) => c.id === commentId)
 
-            if (comment.isLiked) {
-                comment.likes--
-                comment.isLiked = false
-            } else {
-                comment.likes++
-                comment.isLiked = true
+            if (comment.isLikeLoading) {
+                return
             }
 
-            renderComments()
+            button.classList.add('-loading-like')
+
+            comment.isLikeLoading = true
+
+            delay(2000).then(() => {
+                comment.likes = comment.isLiked
+                    ? comment.likes - 1
+                    : comment.likes + 1
+                comment.isLiked = !comment.isLiked
+                comment.isLikeLoading = false
+
+                button.classList.remove('-loading-like')
+
+                renderComments()
+            })
         })
     })
 
@@ -38,7 +56,6 @@ function addEventHandlers() {
             const comment = comments.find((c) => c.id === commentId)
 
             textInput.value = `> ${escapeHtml(comment.name)}\n\n${escapeHtml(comment.text)}\n\n`
-
             textInput.focus()
         })
     })
