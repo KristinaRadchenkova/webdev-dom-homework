@@ -1,8 +1,54 @@
 const host = 'https://wedev-api.sky.pro/api/v1/kristina-boykova'
 
+const fetchWithRetry = (url, options = {}, retries = 3, delay = 1000) => {
+    return new Promise((resolve, reject) => {
+        const attempt = (remainingRetries) => {
+            fetch(url, options)
+                .then((response) => {
+                    if (response.status === 500 && remainingRetries > 0) {
+                        setTimeout(() => {
+                            console.log(
+                                `Повторная попытка запроса, осталось попыток: ${remainingRetries - 1}`,
+                            )
+                            attempt(remainingRetries - 1)
+                        }, delay)
+                    } else {
+                        resolve(response)
+                    }
+                })
+                .catch((error) => {
+                    if (remainingRetries > 0) {
+                        setTimeout(() => {
+                            console.log(
+                                `Повторная попытка запроса после сетевой ошибки, осталось попыток: ${remainingRetries - 1}`,
+                            )
+                            attempt(remainingRetries - 1)
+                        }, delay)
+                    } else {
+                        reject(error)
+                    }
+                })
+        }
+
+        attempt(retries)
+    })
+}
+
 export const fetchComments = () => {
-    return fetch(host + '/comments')
+    return fetchWithRetry(host + '/comments')
         .then((response) => {
+            if (response.status === 500) {
+                return Promise.reject(
+                    new Error(
+                        'Серверная ошибка. Пожалуйста, попробуйте позже.',
+                    ),
+                )
+            }
+            if (!response.ok) {
+                return Promise.reject(
+                    new Error(`Ошибка сервера: ${response.status}`),
+                )
+            }
             return response.json()
         })
         .then((data) => {
@@ -19,16 +65,114 @@ export const fetchComments = () => {
             })
             return appComments
         })
+        .catch((error) => {
+            if (
+                (error.message &&
+                    (error.message.includes('Failed to fetch') ||
+                        error.message.includes('NetworkError'))) ||
+                !navigator.onLine
+            ) {
+                return Promise.reject(
+                    new Error(
+                        'Проблемы с интернетом. Проверьте подключение и попробуйте снова.',
+                    ),
+                )
+            }
+
+            if (error instanceof Error) {
+                return Promise.reject(error)
+            }
+
+            return Promise.reject(
+                new Error(
+                    'Произошла неизвестная ошибка. Пожалуйста, попробуйте позже.',
+                ),
+            )
+        })
 }
 
-export const postComment = (text, name) => {
-    return fetch(host + '/comments', {
+export const postComment = (text, name, forceError = false) => {
+    if (!text || text.trim().length < 5) {
+        return Promise.reject(
+            new Error(
+                'Текст комментария слишком короткий. Минимальная длина - 5 символов',
+            ),
+        )
+    }
+
+    if (!name || name.trim().length < 3) {
+        return Promise.reject(
+            new Error('Имя слишком короткое. Минимальная длина - 3 символа'),
+        )
+    }
+
+    const requestData = {
+        text: text.trim(),
+        name: name.trim(),
+    }
+
+    if (forceError) {
+        requestData.forceError = true
+    }
+
+    return fetchWithRetry(host + '/comments', {
         method: 'POST',
-        body: JSON.stringify({
-            text: text,
-            name: name,
-        }),
-    }).then(() => {
-        return fetchComments()
+        body: JSON.stringify(requestData),
     })
+        .then((response) => {
+            if (response.status === 400) {
+                return response.json().then((errorData) => {
+                    return Promise.reject(
+                        new Error(errorData.error || 'Ошибка валидации данных'),
+                    )
+                })
+            }
+            if (response.status === 500) {
+                return Promise.reject(
+                    new Error(
+                        'Серверная ошибка. Пожалуйста, попробуйте позже.',
+                    ),
+                )
+            }
+            if (!response.ok) {
+                return Promise.reject(
+                    new Error(`Ошибка сервера: ${response.status}`),
+                )
+            }
+            return response.json()
+        })
+        .then(() => {
+            return fetchComments()
+        })
+        .catch((error) => {
+            if (
+                (error.message &&
+                    (error.message.includes('Failed to fetch') ||
+                        error.message.includes('NetworkError'))) ||
+                !navigator.onLine
+            ) {
+                return Promise.reject(
+                    new Error(
+                        'Проблемы с интернетом. Комментарий не отправлен. Проверьте подключение и попробуйте снова.',
+                    ),
+                )
+            }
+
+            // Если ошибка уже в формате Error, просто пробрасываем дальше
+            if (error instanceof Error) {
+                return Promise.reject(error)
+            }
+
+            // Для любых других ошибок создаем Error объект
+            return Promise.reject(
+                new Error(
+                    'Ошибка при отправке комментария: ' +
+                        (error.message || 'неизвестная ошибка'),
+                ),
+            )
+        })
+}
+
+export const postCommentWithForceError = (text, name) => {
+    return postComment(text, name, true)
 }
