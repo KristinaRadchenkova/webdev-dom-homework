@@ -1,16 +1,18 @@
 import { renderComments } from './module/renderComments.js'
 import { addEventHandlers } from './module/addEventHandlers.js'
-import { buttonCreate } from './module/button.js'
+// import { buttonCreate } from './module/button.js'
 import { fetchComments } from './module/api.js'
-import { comments, updateComments } from './module/comments.js'
-buttonCreate
+import { updateComments } from './module/comments.js'
+
 document.addEventListener('DOMContentLoaded', () => {
-    renderComments()
-    addEventHandlers()
+    fetchAndRenderComments()
 })
 
-fetchComments().then((data) => {
-    updateComments(data)
-    console.log(comments)
-    renderComments()
-})
+export const fetchAndRenderComments = () => {
+    fetchComments().then((data) => {
+        updateComments(data)
+        renderComments()
+        addEventHandlers()
+    })
+}
+// buttonCreate()

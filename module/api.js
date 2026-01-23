@@ -1,4 +1,18 @@
-const host = 'https://wedev-api.sky.pro/api/v1/kristina-boykova'
+const host = 'https://wedev-api.sky.pro/api/v2/kristina-boykova'
+
+const authost = 'https://wedev-api.sky.pro/api/user'
+
+export let token = ''
+
+export const setToken = (newToken) => {
+    token = newToken
+}
+
+export let name = ''
+
+export const setName = (newName) => {
+    name = newName
+}
 
 const fetchWithRetry = (url, options = {}, retries = 3, delay = 1000) => {
     return new Promise((resolve, reject) => {
@@ -117,9 +131,17 @@ export const postComment = (text, name, forceError = false) => {
 
     return fetchWithRetry(host + '/comments', {
         method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(requestData),
     })
         .then((response) => {
+            if (response.status === 401) {
+                return Promise.reject(
+                    new Error('Сессия истекла. Пожалуйста, войдите снова.'),
+                )
+            }
             if (response.status === 400) {
                 return response.json().then((errorData) => {
                     return Promise.reject(
@@ -158,12 +180,10 @@ export const postComment = (text, name, forceError = false) => {
                 )
             }
 
-            // Если ошибка уже в формате Error, просто пробрасываем дальше
             if (error instanceof Error) {
                 return Promise.reject(error)
             }
 
-            // Для любых других ошибок создаем Error объект
             return Promise.reject(
                 new Error(
                     'Ошибка при отправке комментария: ' +
@@ -175,4 +195,41 @@ export const postComment = (text, name, forceError = false) => {
 
 export const postCommentWithForceError = (text, name) => {
     return postComment(text, name, true)
+}
+
+export function registration(name, login, password) {
+    return fetch(authost, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            login: login,
+            password: password,
+        }),
+    }).then((response) => {
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`)
+        }
+        return response.json()
+    })
+}
+
+export function login(login, password) {
+    return fetch(authost + '/login', {
+        method: 'POST',
+        // headers: {
+        //     'Content-Type': 'application/json',
+        // },
+        body: JSON.stringify({
+            login: login,
+            password: password,
+        }),
+    }).then((response) => {
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`)
+        }
+        return response.json()
+    })
 }
