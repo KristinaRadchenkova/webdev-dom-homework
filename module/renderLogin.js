@@ -1,4 +1,4 @@
-import { login, setToken } from './api.js'
+import { login, setToken, saveAuthToStorage } from './api.js' 
 import { fetchAndRenderComments } from '../script.js'
 import { setName } from './api.js'
 
@@ -45,6 +45,7 @@ export const renderLogin = () => {
             .then((data) => {
                 setToken(data.user.token)
                 setName(data.user.name)
+                saveAuthToStorage(data.user.token, data.user.name)
                 fetchAndRenderComments()
             })
     })

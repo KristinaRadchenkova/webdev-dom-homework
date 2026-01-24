@@ -2,7 +2,7 @@ import { comments } from './comments.js'
 import { escapeHtml } from './escape.js'
 import { addEventHandlers } from './addEventHandlers.js'
 import { renderLogin } from './renderLogin.js'
-import { token,name } from './api.js'
+import { token, name, clearAuthFromStorage } from './api.js'
 
 const container = document.querySelector('.container')
 
@@ -31,6 +31,12 @@ function renderComments() {
         })
         .join('')
 
+    const logoutButton = token ? 
+        `<div class="add-form-row">
+            <button class="logout-button">Выйти (${escapeHtml(name)})</button>
+        </div>` : 
+        ''
+    
     const addCommentsHtml = `            
             <div class="add-form">
                 <input
@@ -50,12 +56,20 @@ function renderComments() {
                 </div>
             </div>`
     const linkToLoginText = `<p>чтобы отправить комментарий, <span class="link-login">войдите</span></p>`
-    const baseHtml = `<ul class="comments">${commentHtml}</ul>
-    ${token ? addCommentsHtml : linkToLoginText}`
+    const baseHtml = `
+        <ul class="comments">${commentHtml}</ul>
+        ${token ? addCommentsHtml + logoutButton : linkToLoginText}`
     container.innerHTML = baseHtml
 
     if (token) {
         addEventHandlers()
+        const logoutBtn = document.querySelector('.logout-button')
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                clearAuthFromStorage()
+                window.location.reload()
+            })
+        }
     } else {
         document.querySelector('.link-login').addEventListener('click', () => {
             renderLogin()

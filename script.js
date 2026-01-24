@@ -3,9 +3,12 @@ import { addEventHandlers } from './module/addEventHandlers.js'
 // import { buttonCreate } from './module/button.js'
 import { fetchComments } from './module/api.js'
 import { updateComments } from './module/comments.js'
+import { loadAuthFromStorage } from './module/api.js' 
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchAndRenderComments()
+
+    loadAuthFromStorage();
+    fetchAndRenderComments();
 })
 
 export const fetchAndRenderComments = () => {

@@ -14,6 +14,28 @@ export const setName = (newName) => {
     name = newName
 }
 
+export const saveAuthToStorage = (userToken, userName) => {
+    localStorage.setItem('authToken', userToken);
+    localStorage.setItem('userName', userName);
+};
+
+export const clearAuthFromStorage = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userName');
+};
+
+export const loadAuthFromStorage = () => {
+    const token = localStorage.getItem('authToken');
+    const name = localStorage.getItem('userName');
+    
+    if (token && name) {
+        setToken(token);
+        setName(name);
+        return true;
+    }
+    return false;
+};
+
 const fetchWithRetry = (url, options = {}, retries = 3, delay = 1000) => {
     return new Promise((resolve, reject) => {
         const attempt = (remainingRetries) => {
