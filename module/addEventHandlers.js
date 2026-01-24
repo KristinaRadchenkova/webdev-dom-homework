@@ -17,14 +17,18 @@ function addEventHandlers() {
     const likeButtons = document.querySelectorAll('.like-button')
     const commentElements = document.querySelectorAll('.comment')
     const addFormButton = document.querySelector('.add-form-button')
+    const addFormText = document.querySelector('.add-form-text')
+    const addFormName = document.querySelector('.add-form-name')
 
     if (addFormButton) {
         addFormButton.addEventListener('click', () => {
-            const addFormName = document.querySelector('.add-form-name')
-            const addFormText = document.querySelector('.add-form-text')
-
             const name = addFormName.value
             const text = addFormText.value
+
+            if (!text || text.trim().length < 5) {
+                showFormError('Текст комментария слишком короткий. Минимальная длина - 5 символов')
+                return
+            }
 
             const originalText = addFormButton.textContent
 
@@ -36,6 +40,7 @@ function addEventHandlers() {
                     comments.length = 0
                     comments.push(...newComments)
                     addFormText.value = ''
+                    clearFormError()
 
                     addFormButton.textContent = originalText
                     addFormButton.disabled = false
@@ -44,9 +49,16 @@ function addEventHandlers() {
                 })
                 .catch((error) => {
                     console.error('Ошибка при отправке комментария:', error)
+                    showFormError(error.message || 'Ошибка при отправке комментария')
                     addFormButton.textContent = originalText
                     addFormButton.disabled = false
                 })
+        })
+    }
+
+    if (addFormText) {
+        addFormText.addEventListener('input', () => {
+            clearFormError()
         })
     }
 
@@ -93,6 +105,27 @@ function addEventHandlers() {
             textInput.focus()
         })
     })
+}
+
+function showFormError(message) {
+    clearFormError()
+    
+    const errorDiv = document.createElement('div')
+    errorDiv.className = 'form-error-message'
+    errorDiv.textContent = message
+    errorDiv.style.cssText = 'color: #ff6b6b; margin-top: 10px; padding: 10px; background: rgba(255, 107, 107, 0.1); border-radius: 8px;'
+    
+    const addForm = document.querySelector('.add-form')
+    if (addForm) {
+        addForm.appendChild(errorDiv)
+    }
+}
+
+function clearFormError() {
+    const errorDiv = document.querySelector('.form-error-message')
+    if (errorDiv) {
+        errorDiv.remove()
+    }
 }
 
 export { addEventHandlers }

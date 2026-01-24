@@ -48,8 +48,10 @@ function renderComments() {
                 <textarea
                     type="textarea"
                     class="add-form-text"
-                    placeholder="Введите ваш коментарий"
+                    placeholder="Введите ваш комментарий"
                     rows="4"
+                    minlength="5"
+                    required
                 ></textarea>
                 <div class="add-form-row">
                     <button class="add-form-button">Написать</button>

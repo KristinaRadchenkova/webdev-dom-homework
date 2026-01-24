@@ -280,7 +280,8 @@ input.add-form-name:valid:not(:focus):not(:placeholder-shown) {
     border-radius: 18px;
     cursor: pointer;
     transition: all 0.3s ease;
-    align-self: center;
+    align-self: flex-end;
+    margin-right: calc(596px - 100%);
 }
 
 .logout-button:hover {
