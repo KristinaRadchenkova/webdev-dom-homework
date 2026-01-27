@@ -128,20 +128,6 @@ export const fetchComments = () => {
 }
 
 export const postComment = (text, name, forceError = false) => {
-    if (!text || text.trim().length < 5) {
-        return Promise.reject(
-            new Error(
-                'Текст комментария слишком короткий. Минимальная длина - 5 символов',
-            ),
-        )
-    }
-
-    if (!name || name.trim().length < 3) {
-        return Promise.reject(
-            new Error('Имя слишком короткое. Минимальная длина - 3 символа'),
-        )
-    }
-
     const requestData = {
         text: text.trim(),
         name: name.trim(),
@@ -220,23 +206,8 @@ export const postCommentWithForceError = (text, name) => {
 }
 
 export function registration(name, login, password) {
-    if (!name || name.trim().length < 3) {
-        return Promise.reject(new Error('Имя должно содержать минимум 3 символа'))
-    }
-    
-    if (!login || login.trim().length < 3) {
-        return Promise.reject(new Error('Логин должен содержать минимум 3 символа'))
-    }
-    
-    if (!password || password.length < 6) {
-        return Promise.reject(new Error('Пароль должен содержать минимум 6 символов'))
-    }
-    
     return fetch(authost, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
             name: name.trim(),
             login: login.trim(),
@@ -253,14 +224,6 @@ export function registration(name, login, password) {
 }
 
 export function login(login, password) {
-    if (!login || login.trim().length < 3) {
-        return Promise.reject(new Error('Логин должен содержать минимум 3 символа'))
-    }
-    
-    if (!password || password.length < 6) {
-        return Promise.reject(new Error('Пароль должен содержать минимум 6 символов'))
-    }
-    
     return fetch(authost + '/login', {
         method: 'POST',
         body: JSON.stringify({

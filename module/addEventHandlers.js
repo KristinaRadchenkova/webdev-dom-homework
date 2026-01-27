@@ -20,7 +20,9 @@ function addEventHandlers() {
     const addFormText = document.querySelector('.add-form-text')
     const addFormName = document.querySelector('.add-form-name')
 
-    if (addFormButton) {
+    if (addFormButton && !addFormButton.hasAttribute('data-listener-added')) {
+        addFormButton.setAttribute('data-listener-added', 'true')
+        
         addFormButton.addEventListener('click', () => {
             const name = addFormName.value
             const text = addFormText.value
@@ -57,53 +59,63 @@ function addEventHandlers() {
     }
 
     if (addFormText) {
-        addFormText.addEventListener('input', () => {
-            clearFormError()
-        })
+        // Удаляем старый обработчик если он был
+        addFormText.removeEventListener('input', clearFormError)
+        addFormText.addEventListener('input', clearFormError)
     }
 
     likeButtons.forEach((button) => {
-        button.addEventListener('click', (event) => {
-            event.stopPropagation()
+        // Проверяем, был ли уже добавлен обработчик
+        if (!button.hasAttribute('data-like-listener')) {
+            button.setAttribute('data-like-listener', 'true')
+            
+            button.addEventListener('click', (event) => {
+                event.stopPropagation()
 
-            const commentElement = event.target.closest('.comment')
-            const commentId = commentElement.dataset.id
-            const comment = comments.find((c) => c.id === commentId)
+                const commentElement = event.target.closest('.comment')
+                const commentId = commentElement.dataset.id
+                const comment = comments.find((c) => c.id === commentId)
 
-            if (comment.isLikeLoading) {
-                return
-            }
+                if (comment.isLikeLoading) {
+                    return
+                }
 
-            button.classList.add('-loading-like')
+                button.classList.add('-loading-like')
 
-            comment.isLikeLoading = true
+                comment.isLikeLoading = true
 
-            delay(2000).then(() => {
-                comment.likes = comment.isLiked
-                    ? comment.likes - 1
-                    : comment.likes + 1
-                comment.isLiked = !comment.isLiked
-                comment.isLikeLoading = false
+                delay(2000).then(() => {
+                    comment.likes = comment.isLiked
+                        ? comment.likes - 1
+                        : comment.likes + 1
+                    comment.isLiked = !comment.isLiked
+                    comment.isLikeLoading = false
 
-                button.classList.remove('-loading-like')
+                    button.classList.remove('-loading-like')
 
-                renderComments()
+                    renderComments()
+                })
             })
-        })
+        }
     })
 
     commentElements.forEach((commentElement) => {
-        commentElement.addEventListener('click', (event) => {
-            if (event.target.closest('.like-button')) {
-                return
-            }
+        // Проверяем, был ли уже добавлен обработчик клика
+        if (!commentElement.hasAttribute('data-click-listener')) {
+            commentElement.setAttribute('data-click-listener', 'true')
+            
+            commentElement.addEventListener('click', (event) => {
+                if (event.target.closest('.like-button')) {
+                    return
+                }
 
-            const commentId = commentElement.dataset.id
-            const comment = comments.find((c) => c.id === commentId)
-            const textInput = document.querySelector('.add-form-text')
-            textInput.value = `> ${escapeHtml(comment.name)}\n\n${escapeHtml(comment.text)}\n\n`
-            textInput.focus()
-        })
+                const commentId = commentElement.dataset.id
+                const comment = comments.find((c) => c.id === commentId)
+                const textInput = document.querySelector('.add-form-text')
+                textInput.value = `> ${escapeHtml(comment.name)}\n\n${escapeHtml(comment.text)}\n\n`
+                textInput.focus()
+            })
+        }
     })
 }
 
