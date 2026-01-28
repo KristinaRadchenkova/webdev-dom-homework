@@ -1,37 +1,82 @@
 import { comments } from './comments.js'
 import { escapeHtml } from './escape.js'
 import { addEventHandlers } from './addEventHandlers.js'
+import { renderLogin } from './renderLogin.js'
+import { token, name, clearAuthFromStorage } from './api.js'
 
-const commentsList = document.querySelector('.comments')
+const container = document.querySelector('.container')
 
 function renderComments() {
-    commentsList.innerHTML = ''
+    container.innerHTML = ''
 
-    comments.forEach((comment) => {
-        const commentElement = document.createElement('li')
-        commentElement.className = 'comment'
-        commentElement.dataset.id = comment.id
+    const commentHtml = comments
+        .map((comment) => {
+            return `
+        <li class="comment" data-id="${comment.id}">
+            <div class="comment-header">
+                <div>${escapeHtml(comment.name)}</div>
+                <div>${comment.date}</div>
+            </div>
+            <div class="comment-body">
+                <div class="comment-text">${escapeHtml(comment.text)}</div>
+            </div>
+            <div class="comment-footer">
+                <div class="likes">
+                    <span class="likes-counter">${comment.likes}</span>
+                    <button class="like-button ${comment.isLiked ? '-active-like' : ''}"></button>
+                </div>
+            </div>
+        </li>
+        `
+        })
+        .join('')
 
-        commentElement.innerHTML = `
-                    <div class="comment-header">
-                        <div>${escapeHtml(comment.name)}</div>
-                        <div>${comment.date}</div>
-                    </div>
-                    <div class="comment-body">
-                        <div class="comment-text">${escapeHtml(comment.text)}</div>
-                    </div>
-                    <div class="comment-footer">
-                        <div class="likes">
-                            <span class="likes-counter">${comment.likes}</span>
-                            <button class="like-button ${comment.isLiked ? '-active-like' : ''}"></button>
-                        </div>
-                    </div>
-                `
+    const logoutButton = token ? 
+        `<div class="add-form-row">
+            <button class="logout-button">Выйти (${escapeHtml(name)})</button>
+        </div>` : 
+        ''
+    
+    const addCommentsHtml = `            
+            <div class="add-form">
+                <input
+                    type="text"
+                    class="add-form-name"
+                    value="${name}"
+                    readonly
+                />
+                <textarea
+                    type="textarea"
+                    class="add-form-text"
+                    placeholder="Введите ваш комментарий"
+                    rows="4"
+                    minlength="5"
+                    required
+                ></textarea>
+                <div class="add-form-row">
+                    <button class="add-form-button">Написать</button>
+                </div>
+            </div>`
+    const linkToLoginText = `<p>чтобы отправить комментарий, <span class="link-login">войдите</span></p>`
+    const baseHtml = `
+        <ul class="comments">${commentHtml}</ul>
+        ${token ? addCommentsHtml + logoutButton : linkToLoginText}`
+    container.innerHTML = baseHtml
 
-        commentsList.appendChild(commentElement)
-    })
-
-    addEventHandlers()
+    if (token) {
+        addEventHandlers()
+        const logoutBtn = document.querySelector('.logout-button')
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                clearAuthFromStorage()
+                window.location.reload()
+            })
+        }
+    } else {
+        document.querySelector('.link-login').addEventListener('click', () => {
+            renderLogin()
+        })
+    }
 }
 
 export { renderComments }

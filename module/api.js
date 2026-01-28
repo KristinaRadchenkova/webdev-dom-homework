@@ -1,4 +1,40 @@
-const host = 'https://wedev-api.sky.pro/api/v1/kristina-boykova'
+const host = 'https://wedev-api.sky.pro/api/v2/kristina-boykova'
+
+const authost = 'https://wedev-api.sky.pro/api/user'
+
+export let token = ''
+
+export const setToken = (newToken) => {
+    token = newToken
+}
+
+export let name = ''
+
+export const setName = (newName) => {
+    name = newName
+}
+
+export const saveAuthToStorage = (userToken, userName) => {
+    localStorage.setItem('authToken', userToken);
+    localStorage.setItem('userName', userName);
+};
+
+export const clearAuthFromStorage = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userName');
+};
+
+export const loadAuthFromStorage = () => {
+    const token = localStorage.getItem('authToken');
+    const name = localStorage.getItem('userName');
+    
+    if (token && name) {
+        setToken(token);
+        setName(name);
+        return true;
+    }
+    return false;
+};
 
 const fetchWithRetry = (url, options = {}, retries = 3, delay = 1000) => {
     return new Promise((resolve, reject) => {
@@ -92,20 +128,6 @@ export const fetchComments = () => {
 }
 
 export const postComment = (text, name, forceError = false) => {
-    if (!text || text.trim().length < 5) {
-        return Promise.reject(
-            new Error(
-                'Текст комментария слишком короткий. Минимальная длина - 5 символов',
-            ),
-        )
-    }
-
-    if (!name || name.trim().length < 3) {
-        return Promise.reject(
-            new Error('Имя слишком короткое. Минимальная длина - 3 символа'),
-        )
-    }
-
     const requestData = {
         text: text.trim(),
         name: name.trim(),
@@ -117,9 +139,17 @@ export const postComment = (text, name, forceError = false) => {
 
     return fetchWithRetry(host + '/comments', {
         method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(requestData),
     })
         .then((response) => {
+            if (response.status === 401) {
+                return Promise.reject(
+                    new Error('Сессия истекла. Пожалуйста, войдите снова.'),
+                )
+            }
             if (response.status === 400) {
                 return response.json().then((errorData) => {
                     return Promise.reject(
@@ -158,12 +188,10 @@ export const postComment = (text, name, forceError = false) => {
                 )
             }
 
-            // Если ошибка уже в формате Error, просто пробрасываем дальше
             if (error instanceof Error) {
                 return Promise.reject(error)
             }
 
-            // Для любых других ошибок создаем Error объект
             return Promise.reject(
                 new Error(
                     'Ошибка при отправке комментария: ' +
@@ -175,4 +203,39 @@ export const postComment = (text, name, forceError = false) => {
 
 export const postCommentWithForceError = (text, name) => {
     return postComment(text, name, true)
+}
+
+export function registration(name, login, password) {
+    return fetch(authost, {
+        method: 'POST',
+        body: JSON.stringify({
+            name: name.trim(),
+            login: login.trim(),
+            password: password,
+        }),
+    }).then((response) => {
+        if (!response.ok) {
+            return response.json().then((errorData) => {
+                throw new Error(errorData.error || `Ошибка сервера: ${response.status}`)
+            })
+        }
+        return response.json()
+    })
+}
+
+export function login(login, password) {
+    return fetch(authost + '/login', {
+        method: 'POST',
+        body: JSON.stringify({
+            login: login.trim(),
+            password: password,
+        }),
+    }).then((response) => {
+        if (!response.ok) {
+            return response.json().then((errorData) => {
+                throw new Error(errorData.error || 'Неверный логин или пароль')
+            })
+        }
+        return response.json()
+    })
 }
